@@ -16,6 +16,7 @@ retry_time = 10
 
 window_title = u'网上股票交易系统5.0'
 
+
 def get_clipboard_data():
     win32clipboard.OpenClipboard()
     try:
@@ -24,11 +25,13 @@ def get_clipboard_data():
         win32clipboard.CloseClipboard()
     return data
 
+
 def hot_key(keys):
     for key in keys:
         win32api.keybd_event(VK_CODE[key], 0, 0, 0)
     for key in reversed(keys):
         win32api.keybd_event(VK_CODE[key], 0, win32con.KEYEVENTF_KEYUP, 0)
+
 
 def set_text(hwnd, string):
     win32gui.SetForegroundWindow(hwnd)
@@ -39,11 +42,13 @@ def set_text(hwnd, string):
         win32api.keybd_event(VK_CODE[char], 0, 0, 0)
         win32api.keybd_event(VK_CODE[char], 0, win32con.KEYEVENTF_KEYUP, 0)
 
+
 def get_text(hwnd):
     length = ctypes.windll.user32.SendMessageW(hwnd, win32con.WM_GETTEXTLENGTH)
     buf = ctypes.create_unicode_buffer(length + 1)
     ctypes.windll.user32.SendMessageW(hwnd, win32con.WM_GETTEXT, length, ctypes.byref(buf))
     return buf.value
+
 
 def parse_table(text):
     lines = text.split('\t\r\n')
@@ -72,7 +77,7 @@ class ThsAuto:
     def kill_client(self):
         self.hwnd_main = None
         retry = 5
-        while(retry > 0):
+        while retry > 0:
             hwnd = win32gui.FindWindow(None, window_title)
             if hwnd == 0:
                 time.sleep(1)
@@ -83,7 +88,6 @@ class ThsAuto:
                 hot_key(['alt', 'F4'])
                 time.sleep(1)
                 retry -= 1
-                
 
     def get_tree_hwnd(self):
         hwnd = self.hwnd_main
@@ -121,7 +125,7 @@ class ThsAuto:
             'code': 0, 'status': 'succeed',
             'data': data,
         }
-        
+
     def get_position(self):
         self.switch_to_normal()
         hot_key(['F1'])
@@ -159,7 +163,7 @@ class ThsAuto:
         # self.right_click_menu(ctrl, -50, -50, idx=3)
         win32gui.SetForegroundWindow(ctrl)
         hot_key(['ctrl', 'c'])
-        
+
         data = None
         retry = 0
         while not data and retry < retry_time:
@@ -172,7 +176,7 @@ class ThsAuto:
                 'data': parse_table(data),
             }
         return {'code': 1, 'status': 'failed'}
-        
+
     def get_filled_orders(self):
         self.switch_to_normal()
         hot_key(['F2'])
@@ -337,7 +341,7 @@ class ThsAuto:
         self.refresh()
         hwnd = self.get_right_hwnd()
         ctrl = win32gui.GetDlgItem(hwnd, 0x417)
-        
+
         # self.right_click_menu(ctrl, -50, -50, idx=3)
         win32gui.SetForegroundWindow(ctrl)
         hot_key(['ctrl', 'c'])
@@ -373,6 +377,7 @@ class ThsAuto:
 
     def get_result(self, cid=0x3EC):
         tid, pid = win32process.GetWindowThreadProcessId(self.hwnd_main)
+
         def enum_children(hwnd, results):
             try:
                 if (win32gui.IsWindowVisible(hwnd) and
@@ -382,14 +387,15 @@ class ThsAuto:
                 return
 
         def handler(hwnd, results):
-            if (win32api.GetWindowLong(hwnd, win32con.GWL_ID) == cid and 
+            if (win32api.GetWindowLong(hwnd, win32con.GWL_ID) == cid and
                     win32gui.GetClassName(hwnd) == 'Static'):
                 results.append(hwnd)
                 return False
             enum_children(hwnd, results)
             return len(results) == 0
+
         popups = []
-        windows = []            
+        windows = []
         win32gui.EnumThreadWindows(tid, lambda hwnd, l: l.append(hwnd), windows)
         for hwnd in windows:
             if not handler(hwnd, popups):
@@ -488,4 +494,3 @@ class ThsAuto:
 
     def test(self):
         pass
-
